@@ -1,2 +1,124 @@
-# PriceComparator
-This project is designed to automatically gather product information from two popular Russian grocery stores, Magnit and Perekrestok, and compare prices on identical products. It uses asynchronous programming to efficiently fetch data and provides a comprehensive report on price differences by category.
+# PriceComparator: Сравнение цен в магазинах
+
+## Обзор
+Этот проект предназначен для автоматического сбора информации о товарах и сравнения цен на идентичные товары. 
+
+В проекте используется асинхронное программирование для эффективного получения данных и предоставления подробного отчета о разнице в ценах по категориям.
+
+Для примера взяты некоторые категории товаров из магазинов Магнит и Перекрёсток.
+
+## Возможности
+* Асинхронное получение данных о товарах из указанных разделов и магазинов.
+* Асинхронное сохранение информацию о товарах в базе данных.
+* Асинхронное сравнение средние цены на товары в одних и тех же категориях из магазинов.
+
+## Стек технологий
+Проект использует следующие технологии и библиотеки:
+
+### Языки программирования
+* Python - основной язык программирования проекта.
+
+### Библиотеки
+* aiohttp - для асинхронного HTTP-клиента, используемого для получения HTML-страниц.
+* BeautifulSoup - для парсинга HTML и извлечения данных из веб-страниц.
+* PostgreSQL - основная база данных для хранения информации о продуктах.
+* SQLAlchemy 2.0 - для взаимодействия с базой данных и ORM.
+* pydantic - для валидации данных и управления настройками конфигурации.
+* asyncpg - для асинхронного взаимодействия с PostgreSQL.
+* asyncio для управления асинхронными задачами и повышения производительности при работе с сетью и базой данных.
+
+## Установка
+1. Клонируйте репозиторий:
+```Bash
+git clone https://github.com/TheRomanVolkov/PriceComparator.git
+```
+
+2. Создайте виртуальное окружение и установите необходимые зависимости:
+```Bash
+pip install -r requirements.txt
+```
+
+## Конфигурация
+1. Создайте файл .env в корневой директории проекта из примера .example.env со следующим содержимым:
+```
+MAGNIT_BASE_URL=https://dostavka.magnit.ru/
+PEREKRESTOK_BASE_URL=https://www.perekrestok.ru/
+DATABASE_URL="postgresql+asyncpg://username:password@localhost:5432/price_compare"
+```
+2. Настройте необходимые названия магазинов и сравниваемых разделов (т.к. в магазинах разделы называются по-разному) в файле config.py:
+```python
+
+STORES = {
+    "Магнит": MAGNIT_BASE_URL,
+    "Перекрёсток": PEREKRESTOK_BASE_URL,
+}
+
+SECTIONS = {
+    "Готовая еда": {
+        "Магнит": "express/catalog/4435-gotovaya-yeda",
+        "Перекрёсток": "cat/mc/25/gotovaa-eda"
+    },
+    "Кофе": {
+        "Магнит": "express/catalog/44121-kofe",
+        "Перекрёсток": "cat/c/80/kofe"
+    },
+    "Молоко": {
+        "Магнит": "express/catalog/45723-moloko-pasterizovannoye",
+        "Перекрёсток": "cat/c/114/moloko"
+    }
+}
+```
+3. Настройки селекторов
+Файл parsers/selectors.py содержит настройки селекторов для парсинга данных с сайтов Магнит и Перекрёсток. Эти селекторы определяют, какие HTML-элементы будут использованы для извлечения информации о продуктах.
+
+#### Настройки для Магнит
+```python
+magnit_selectors = {
+    'product_links': ('a', {'class': 'app-link product-card product-list__item'}),
+    'product_details': {
+        'name': ('h1', {'class': 'm-page-header__title text--h1'}),
+        'description': ('div', {'class': 'product-detail-text'}),
+        'price_new': ('div', {'data-test-id': 'product-price'}),
+        'price_old': ('div', {'data-test-id': 'product-price_old'}),
+        'article': ('span', {'data-test-id': 'product-article'}),
+    }
+}
+```
+* product_links: Селектор для ссылок на страницы продуктов.
+* product_details: Селекторы для получения деталей продукта, таких как название, описание, новая и старая цена, а также артикул.
+#### Настройки для Перекрёсток
+```python
+perekrestok_selectors = {
+    'product_links': ('a', {'class': 'product-card__link'}),
+    'product_details': {
+        'name': ('h1', {'class': 'sc-fubCzh ibFUIH product__title'}),
+        'price_new': ('div', {'class': 'price-new'}),
+        'price_old': ('div', {'class': 'price-old'}),
+        'rating': ('div', {'role': 'img', 'class': 'sc-fFucqa drDzyo'}),
+        'availability': ('div', {'class': 'price-card-balance-state'}),
+    }
+}
+```
+* product_links: Селектор для ссылок на страницы продуктов.
+* product_details: Селекторы для получения деталей продукта, таких как название, новая и старая цена, рейтинг и доступность.
+
+Эти настройки селекторов используются парсерами для извлечения необходимых данных с веб-страниц.
+При необходимости парсинг новых полей - добавить нужные селекторы в соответствующий словарь.
+
+## Запуск проекта
+1. Запустите скрипт для сбора данных:
+```
+python main.py 
+```
+
+
+2. Запустите скрипт для сравнения собранных данных:
+```
+python price_comparator.py
+```
+
+
+## Развитие проекта:
+* Автоматическое сопоставление разделов при парсинге разделов.
+* Добавить историю изменения товаров и цен.
+* Кеширование данных.
